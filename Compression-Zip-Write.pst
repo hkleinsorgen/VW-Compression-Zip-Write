@@ -12,8 +12,16 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-Comment: Basic support for writing ZIP archives. Corresponds to version 2.0 of the ZIP specification.
-Reading and updating is not supported. Use Compression-Zip to read archives.
+Comment: Basic support for writing ZIP archives. Corresponds to version 6.3.5 of the ZIP specification.
+
+Additional features:
+- reading and writing large files >= 4 GB (Zip64)
+- UTF-8 encoded filenames
+Fixes
+- prevents directory traversal when extracting files
+- patches zlib interface memory leak 
+
+See https://support.pkware.com/display/PKZIP/APPNOTE for details about the ZIP format.
 
 Example: Create a ZIP archive and add $(VISUALWORKS)/doc/BasicLibraries.pdf as pdf/BasicLibraries.pdf
 
@@ -40,35 +48,105 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-DbIdentifier: psql_public_cst_2007
-DbTrace: 96211
-DbUsername: klnsrgn
-DbVersion: (7.7).18
 DevelopmentPrerequisites: #(#(#any 'Compression-Zip' '') #(#any 'Compression-ZLib' ''))
+KSignature: #('definedClasses' 9 'definedClassesHash' 10689028879 'extendedClasses' 7 'extendedClassesHash' 1519228051)
+KSignatureV2: #('definedClasses' 9 'definedClassesHash' 662771475705149048114329042919162949023708650662 'extendedClasses' 7 'extendedClassesHash' 1127814677715102107652214159049488367574273250362)
 NoSignature: true
 PackageName: Compression-Zip-Write
-Parcel: #('Compression-Zip-Write')
-ParcelDirectory: e:\develop\git\Compression-Zip-Write\Compression-Zip-Write
+Parcel: #($e "16r0065")
 PrerequisiteDescriptions: #(#(#name 'Compression-Zip' #componentType #package) #(#name 'Compression-ZLib' #componentType #package))
 PrerequisiteParcels: #(#('Compression-Zip' '') #('Compression-ZLib' ''))
-PrintStringCache: ((7.7).18,klnsrgn)
-Version: (7.7).18
-Date: 1:54:10 PM September 16, 2017
+Version: (7.10).13
+Date: 1:09:28 AM March 10, 2019
  -->
-<time-stamp>From VisualWorks®, 8.1.1 of 10. März 2016 on 16. September 2017 at 13:54:10</time-stamp>
+<time-stamp>From VisualWorks®, 8.3.2 of 16. November 2018 on 10. März 2019 at 01:09:28</time-stamp>
 
 
 <do-it>(Dialog confirm: 'You are filing-in a Parcel source file!\\While this is possible it will not have\the same effect as loading the parcel.\None of the Parcel''s prerequisites will\be loaded and none of its load actions\will be performed.\\Are you sure you want to file-in?' withCRs) ifFalse: [self error: 'Parcel file-in abandoned.  Choose terminate or close.']</do-it>
 
 <class>
-<name>WritableArchive</name>
+<name>Zip64Archive</name>
 <environment>OS.Zip</environment>
 <super>OS.Zip.Archive</super>
 <private>false</private>
 <indexed-type>none</indexed-type>
-<inst-vars>compressionLevel </inst-vars>
+<inst-vars>zip64Directory zip64Locator </inst-vars>
 <class-inst-vars></class-inst-vars>
 <imports></imports>
+<category></category>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</class>
+
+<comment>
+<class-id>OS.Zip.Zip64Archive</class-id>
+<body>Supports Zip64 archives. Can also be used for normal Zip archives.</body>
+</comment>
+
+<class>
+<name>Zip64ArchiveEntry</name>
+<environment>OS.Zip</environment>
+<super>OS.Zip.ArchiveEntry</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars>zip64FieldValues </inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category></category>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</class>
+
+<comment>
+<class-id>OS.Zip.Zip64ArchiveEntry</class-id>
+<body>Supports Zip64 archives</body>
+</comment>
+
+<class>
+<name>AbstractZipWriteStream</name>
+<environment>OS.Zip</environment>
+<super>OS.ZLib.DeflateStream</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars>archiveEntry headerPosition contentPosition crc32 uncompressedLength compressionMethod </inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports>
+			ZLib.ZLibInterface
+			</imports>
+<category></category>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</class>
+
+<class>
+<name>ZipStoreWriteStream</name>
+<environment>OS.ZLib</environment>
+<super>OS.Zip.AbstractZipWriteStream</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars></inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category></category>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</class>
+
+<class>
+<name>WritableArchive</name>
+<environment>OS.Zip</environment>
+<super>OS.Zip.Zip64Archive</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars>compressionLevel compressionMethod needsZip64 </inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports>
+			OS.ZLib.*
+			</imports>
 <category></category>
 <attributes>
 <package>Compression-Zip-Write</package>
@@ -83,10 +161,10 @@ Date: 1:54:10 PM September 16, 2017
 <class>
 <name>ZipDeflateStream</name>
 <environment>OS.Zip</environment>
-<super>OS.ZLib.DeflateStream</super>
+<super>OS.Zip.AbstractZipWriteStream</super>
 <private>false</private>
 <indexed-type>none</indexed-type>
-<inst-vars>archiveEntry headerPosition contentPosition crc32 </inst-vars>
+<inst-vars></inst-vars>
 <class-inst-vars></class-inst-vars>
 <imports>
 			ZLib.ZLibInterface
@@ -99,7 +177,7 @@ Date: 1:54:10 PM September 16, 2017
 
 <comment>
 <class-id>OS.Zip.ZipDeflateStream</class-id>
-<body>Compression stream using the deflate compression methodInstance Variables:	archiveEntry	&lt;WritableArchiveEntry&gt;	entry of the file that is written	contentPosition	&lt;Integer&gt;	position of the comprssed content 	crc32	&lt;Integer&gt;	checksum	headerPosition	&lt;Integer&gt;	position of the local header</body>
+<body>Compression stream using the deflate compression methodInstance Variables:	archiveEntry	&lt;WritableArchiveEntry&gt;	entry of the file that is written	contentPosition	&lt;Integer&gt;	position of the compressed content 	crc32	&lt;Integer&gt;	checksum	headerPosition	&lt;Integer&gt;	position of the local header	uncompressedLength &lt;Integer&gt; length of the input</body>
 </comment>
 
 <class>
@@ -145,7 +223,7 @@ Date: 1:54:10 PM September 16, 2017
 <class>
 <name>WritableArchiveEntry</name>
 <environment>OS.Zip</environment>
-<super>OS.Zip.ArchiveEntry</super>
+<super>OS.Zip.Zip64ArchiveEntry</super>
 <private>false</private>
 <indexed-type>none</indexed-type>
 <inst-vars>localHeader prepared encodedFileName encodedComment </inst-vars>
@@ -162,24 +240,207 @@ Date: 1:54:10 PM September 16, 2017
 <body>Represents a file within a writeable ZIP archive. Reading and updating is not supported.Instance Variables:	localHeader	&lt;UninterpretedBytes&gt;	local header </body>
 </comment>
 
+<shared-variable>
+<name>Zip64OverflowMarkerLong</name>
+<environment>OS.Zip</environment>
+<private>false</private>
+<constant>false</constant>
+<category>miscellanous constants</category>
+<initializer>16rFFFFFFFF </initializer>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</shared-variable>
+
+<shared-variable>
+<name>Zip64OverflowMarkerShort</name>
+<environment>OS.Zip</environment>
+<private>false</private>
+<constant>false</constant>
+<category>miscellanous constants</category>
+<initializer>16rFFFF </initializer>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</shared-variable>
+
+<shared-variable>
+<name>StreamMap</name>
+<environment>OS.Zip.WritableArchive</environment>
+<private>false</private>
+<constant>false</constant>
+<category>accessing</category>
+<attributes>
+<package>Compression-Zip-Write</package>
+</attributes>
+</shared-variable>
+
+<methods>
+<class-id>OS.Zip.Zip64ArchiveEntry</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">compressedSize	&lt;headerPosition: 17 zip64Order: 2&gt;		^ self zip64ValueAt: #compressedSize ifAbsent: [ super compressedSize ]</body>
+
+<body package="Compression-Zip-Write">offset	&lt;headerPosition: 39 zip64Order: 3&gt;	^ self zip64ValueAt: #offset ifAbsent: [ super offset ]</body>
+
+<body package="Compression-Zip-Write">uncompressedSize	&lt;headerPosition: 21 zip64Order: 1&gt;		^ self zip64ValueAt: #uncompressedSize ifAbsent: [ super uncompressedSize ]</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64ArchiveEntry class</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">zip64FieldPragma	&lt;pragmas: #instance&gt;	^  #(#headerPosition:zip64Order:)</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64Archive</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">directoryOffset	^ self zip64LongLongAt: 48 for: super directoryOffset</body>
+
+<body package="Compression-Zip-Write">directorySize	^ self zip64LongLongAt: 40 for: super directorySize</body>
+
+<body package="Compression-Zip-Write">totalEntries	^ self zip64LongLongAt: 32 for: super totalEntries</body>
+
+<body package="Compression-Zip-Write">totalEntriesOnDisk	^ self zip64LongLongAt: 24 for: super totalEntriesOnDisk</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64Archive</class-id> <category>private</category>
+
+<body package="Compression-Zip-Write">zip64LongLongAt: byteOffset for: zipValue 	" returns the 'long long' (8 byte) value from the Zip64 directory if the standard value is too large "	^ ( zipValue = Zip64OverflowMarkerLong 		and: [ zip64Directory notNil and: [ zip64Directory sizeInBytes &gt;= ( byteOffset + 8 )]]) 		ifTrue: [ zip64Directory unsignedLongLongAt: byteOffset + 1 bigEndian: false ]		ifFalse: [ zipValue ]</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64Archive</class-id> <category>initialize-release</category>
+
+<body package="Compression-Zip-Write">on: aStream	" modified to support Zip64 "	| dirPos |	stream := aStream.	stream reset.	(stream next: 4) ~= LocalFileHeaderSignature ifTrue: [^self error: 'Not a zip file - invalid signature'].	"The following can be made a good bit faster by scanning smaller blocks for the signature.  But this is the easiest for now..."	stream position: (0 max: (stream size - self class maxEndCentralDirectorySize)).	(stream skipToAll: EndCentralDirectorySignature)		isNil ifTrue: [^self error: 'End of central directory signature not found'].	dirPos := stream position.	directory := (stream next: 22) changeClassTo: UninterpretedBytes.	comment := (stream next: self commentLength) asString.	" Detect Zip64. WARNING: Number of entries is only valid after doing this "	self directoryOffset = Zip64OverflowMarkerLong 		ifTrue: [			stream position: dirPos - self class zip64DirectoryLocatorSize.			self readZip64.		].	(self diskNumber ~= 0	or: [ self directoryDiskNumber ~= 0	or: [ self totalEntriesOnDisk ~= self totalEntries ] ]	) ifTrue: [^self error: 'Multiple disk archives are not currently supported.'].	entries := Array new: self totalEntries.	stream position: self directoryOffset.	1 to: self totalEntries do: [ :i |		entries at: i put: (Zip64ArchiveEntry on: stream) ]</body>
+
+<body package="Compression-Zip-Write">readZip64	" stream must be positioned before the Zip64 end of central directory locator	when calling this method "	| zip64EndOfDirOffset signature |	signature := stream next: 4.	stream skip: -4.	signature = self class zip64DirectoryLocatorSignature 		ifFalse: [ ^ self ].	zip64Locator := ( stream next: self class zip64DirectoryLocatorSize ) 			changeClassTo: UninterpretedBytes.	zip64EndOfDirOffset := zip64Locator unsignedLongLongAt: 9 bigEndian: false.	stream position: zip64EndOfDirOffset.	( stream skipToAll: self class zip64EndOfCentralDirectorySignature ) isNil 		ifTrue: [ ^ self error: 'End of Zip64 central directory signature not found' ].	zip64Directory := ( stream next: self class zip64EndOfCentralDirectoryMinSize ) 			changeClassTo: UninterpretedBytes.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64Archive class</class-id> <category>constants</category>
+
+<body package="Compression-Zip-Write">zip64DirectoryLocatorSignature	" #[ 16r07 16r06 16r4b 16r50 ] reverse "	^ #[ 80 75 6 7 ]</body>
+
+<body package="Compression-Zip-Write">zip64DirectoryLocatorSize	^ 20</body>
+
+<body package="Compression-Zip-Write">zip64EndOfCentralDirectoryMinSize	^ 56</body>
+
+<body package="Compression-Zip-Write">zip64EndOfCentralDirectorySignature	" #[ 16r06 16r06 16r4b 16r50 ] reverse "	^ #[80 75 6 6]</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64ArchiveEntry</class-id> <category>initialize-release</category>
+
+<body package="Compression-Zip-Write">on: aStream 	super on: aStream.	self readZip64.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64ArchiveEntry</class-id> <category>private</category>
+
+<body package="Compression-Zip-Write">parseZip64: zip64ExtraField 	" the order of the fields is fixed, but the offset isn't 	and depends on the values of the original fields 	*sigh* "	| extraOffset values |	values := Dictionary new.	extraOffset := 1.	zip64FieldValues := nil.	self zip64Fields do: 		[: fieldPragma | ( self perform: fieldPragma selector ) = Zip64OverflowMarkerLong 				ifTrue: 				[	values 						at: fieldPragma selector						put: ( zip64ExtraField unsignedLongLongAt: extraOffset bigEndian: false ).					extraOffset := extraOffset + 8				]		].	zip64FieldValues := values.</body>
+
+<body package="Compression-Zip-Write">readZip64	" detect and parse a ZIP64 extra information field containing 64-bit values "		| extraStream zip64ExtraField |	extraStream := extraField readStream.	[ extraStream atEnd ] whileFalse: 		[ | extraHeader extraLength |			extraHeader := extraStream nextAvailable: 2.			extraLength := extraStream next + (extraStream next * 256).			(extraHeader = self class zip64ExtraFieldId and: [ extraLength &gt;= self class zip64ExtraFieldMinSize ])				ifTrue: 				[	zip64ExtraField := (extraStream next: extraLength) changeClassTo: UninterpretedBytes.					self parseZip64: zip64ExtraField				]				ifFalse: [ extraStream skip: extraLength ]		].</body>
+
+<body package="Compression-Zip-Write">zip64Fields	" in the order as defined by the ZIP64 extension "	^ ( Tools.Pragma allNamed: #headerPosition:zip64Order: from: self class to: Zip64ArchiveEntry ) 		asSortedCollection: [: p1 : p2 | ( p1 argumentAt: 2 ) &lt;= ( p2 argumentAt: 2 ) ]</body>
+
+<body package="Compression-Zip-Write">zip64ValueAt: key ifAbsent: zipValue 	^ zip64FieldValues notNil 		ifTrue: [ zip64FieldValues at: key ifAbsent: zipValue ]		ifFalse: [ zipValue value ]</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Zip64ArchiveEntry class</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">zip64ExtraFieldId	^ #[ 16r01 16r00]</body>
+
+<body package="Compression-Zip-Write">zip64ExtraFieldMinSize	^ 8</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.AbstractZipWriteStream</class-id> <category>initialize-release</category>
+
+<body package="Compression-Zip-Write">finishOutput	| endPosition |	destinationStream flush.	endPosition := destinationStream position.	" update the header "	self archiveEntry 		crc32: crc32;		compressedSize: endPosition - contentPosition;		uncompressedSize: uncompressedLength.	destinationStream position: headerPosition.	self archiveEntry writeLocalHeaderTo: destinationStream.	destinationStream position: endPosition.</body>
+
+<body package="Compression-Zip-Write">on: aStream	super on: aStream.	crc32 := interface cCrc32: 0 buffer: 0 length: 0.	uncompressedLength := 0.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.AbstractZipWriteStream</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">archiveEntry	^ archiveEntry</body>
+
+<body package="Compression-Zip-Write">compressionMethod	^ compressionMethod</body>
+
+<body package="Compression-Zip-Write">compressionMethod: aCompressionMethod 	compressionMethod := aCompressionMethod.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.AbstractZipWriteStream</class-id> <category>private</category>
+
+<body package="Compression-Zip-Write">archiveEntry: anArchiveEntry	archiveEntry := anArchiveEntry.</body>
+
+<body package="Compression-Zip-Write">updateCrc	position &gt; 0 		ifTrue: 		[	crc32 := interface cCrc32: crc32 buffer: collection length: position.			uncompressedLength := uncompressedLength + position		].</body>
+
+<body package="Compression-Zip-Write">writeHeader	headerPosition := destinationStream position.	self archiveEntry offset: headerPosition .	" the actual local file header will be written later "	self archiveEntry writeLocalHeaderTo: destinationStream.	contentPosition := destinationStream position.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.AbstractZipWriteStream</class-id> <category>status</category>
+
+<body package="Compression-Zip-Write">close	"Write any unwritten information. 	Does not close the archive stream"	self finishBuffer.	self finishOutput.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.AbstractZipWriteStream class</class-id> <category>instance creation</category>
+
+<body package="Compression-Zip-Write">on: stream compressionLevel: compressionLevel compressionMethod: compressionMethod archiveEntry: archiveEntry 	^ self basicNew		archiveEntry: archiveEntry;		compressionMethod: compressionMethod;		on: stream compressionLevel: compressionLevel;		yourself</body>
+</methods>
+
+<methods>
+<class-id>OS.ZLib.ZipStoreWriteStream</class-id> <category>private</category>
+
+<body package="Compression-Zip-Write">finishBuffer	self writeBuffer: false.</body>
+
+<body package="Compression-Zip-Write">setupBufferAndLimits	" copy-paste to be able to set the compression method..."	| result |	interface := ZLibInterface newUsingEngineAllocator.	outputBuffer := interface class cachedHeap: BufferSize.	collection := interface class cachedHeap: BufferSize.	interface		next_out: outputBuffer fixedHeapAddress;		avail_out: BufferSize.	position := 0.	readLimit := -1.	writeLimit := BufferSize</body>
+
+<body package="Compression-Zip-Write">writeBuffer: flush	self updateCrc.	destinationStream next: position putAll: collection startingAt: 1.	position := 0.	writeLimit := BufferSize.	flush ifTrue: [ destinationStream flush ]</body>
+</methods>
+
+<methods>
+<class-id>OS.ZLib.ZipStoreWriteStream</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">compressionLevel: anInteger	" no compression at all "	compressionLevel := 0</body>
+</methods>
+
 <methods>
 <class-id>OS.Zip.WritableArchive</class-id> <category>private</category>
 
 <body package="Compression-Zip-Write">commentLength: anInteger	directory unsignedShortAt: 21 put: anInteger bigEndian: false</body>
 
-<body package="Compression-Zip-Write">directoryDiskNumber: anInteger	directory unsignedShortAt: 7 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">directoryAt: directoryOffset zip64At: zip64Offset putLong: longValue 	| centralValue |	centralValue := longValue &gt;= Zip64OverflowMarkerLong			ifTrue: 			[	needsZip64 := true.				Zip64OverflowMarkerLong			]			ifFalse: [ longValue ].		directory unsignedLongAt: directoryOffset put: centralValue bigEndian: false.	zip64Directory unsignedLongLongAt: zip64Offset put: longValue bigEndian: false.</body>
 
-<body package="Compression-Zip-Write">directoryOffset: anInteger	directory unsignedLongAt: 17 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">directoryAt: directoryOffset zip64At: zip64Offset putShort: shortValue 	| centralValue |	centralValue := shortValue &gt;= Zip64OverflowMarkerShort			ifTrue: 			[	needsZip64 := true.				Zip64OverflowMarkerShort			]			ifFalse: [ shortValue ].	directory unsignedShortAt: directoryOffset put: centralValue bigEndian: false.	zip64Directory unsignedLongAt: zip64Offset put: shortValue bigEndian: false.</body>
 
-<body package="Compression-Zip-Write">directorySize: anInteger	directory unsignedLongAt: 13 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">directoryDiskNumber: anInteger	self directoryAt: 7 zip64At: 21 putShort: anInteger</body>
 
-<body package="Compression-Zip-Write">diskNumber: anInteger	directory unsignedShortAt: 5 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">directoryOffset: anInteger	self directoryAt: 17 zip64At: 49 putLong: anInteger</body>
+
+<body package="Compression-Zip-Write">directorySize: anInteger	self directoryAt: 13 zip64At: 41 putLong: anInteger</body>
+
+<body package="Compression-Zip-Write">diskNumber: anInteger	self directoryAt: 5 zip64At: 17 putShort: anInteger.</body>
 
 <body package="Compression-Zip-Write">encodeString: aString on: aStream	aStream nextPutAll: aString asByteArray</body>
 
-<body package="Compression-Zip-Write">totalEntries: anInteger	directory unsignedShortAt: 11 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">initializeZip64	needsZip64 := false. " only use the Zip64 extension when necessary "	zip64Directory := UninterpretedBytes new: self class zip64EndOfCentralDirectoryMinSize.	self class zip64EndOfCentralDirectorySignature 		keysAndValuesDo: [: i : byte | zip64Directory byteAt: i put: byte ].	zip64Directory unsignedLongLongAt: 5 put: zip64Directory sizeInBytes - 12 bigEndian: false.	zip64Directory unsignedShortAt: 13 put: self class zipVersion bigEndian: false.	zip64Directory unsignedShortAt: 15 put: self class zipVersion bigEndian: false.		zip64Locator := UninterpretedBytes new: self class zip64DirectoryLocatorSize.	self class zip64DirectoryLocatorSignature keysAndValuesDo: [ : i : byte |		zip64Locator byteAt: i put: byte.	].</body>
 
-<body package="Compression-Zip-Write">totalEntriesOnDisk: anInteger	directory unsignedShortAt: 9 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">needsZip64	^ needsZip64</body>
+
+<body package="Compression-Zip-Write">streamClassForCompressionMethod: aCompressionMethod	^self class streamMap		at: aCompressionMethod		ifAbsent: [ self error: 'Unable to handle compression method ', aCompressionMethod printString ]</body>
+
+<body package="Compression-Zip-Write">totalEntries: anInteger	self directoryAt: 11 zip64At: 33 putShort: anInteger.</body>
+
+<body package="Compression-Zip-Write">totalEntriesOnDisk: anInteger	self directoryAt: 9 zip64At: 25 putShort: anInteger</body>
+
+<body package="Compression-Zip-Write">writeZip64Directory	" write ZIP 64 directory + locator "	| dirPosition |	dirPosition := stream position.	" the locator points to the ZIP64 directory "		zip64Locator unsignedLongAt: 5 put: self directoryDiskNumber bigEndian: false.	zip64Locator unsignedLongLongAt: 9 put: dirPosition bigEndian: false.	zip64Locator unsignedLongAt: 17 put: self directoryDiskNumber + 1 bigEndian: false.	stream nextPutAll: zip64Directory asByteArray.	stream nextPutAll: zip64Locator asByteArray.</body>
 </methods>
 
 <methods>
@@ -190,12 +451,20 @@ Date: 1:54:10 PM September 16, 2017
 <body package="Compression-Zip-Write">compressionLevel	" Default compression level "	^ compressionLevel</body>
 
 <body package="Compression-Zip-Write">compressionLevel: aCompressionLevel 	" Default compression level.	Between ZLibInterface Z_BEST_SPEED and ZLibInterface Z_BEST_COMPRESSION "	compressionLevel := aCompressionLevel.</body>
+
+<body package="Compression-Zip-Write">compressionMethod	^ compressionMethod</body>
+
+<body package="Compression-Zip-Write">compressionMethod: aCompressionMethod 	" Default compression method. Must be either Z_DEFLATED or Z_NO_COMPRESSION "	compressionMethod := aCompressionMethod.</body>
+
+<body package="Compression-Zip-Write">setCompressionMethodDeflate	self compressionMethod: ZLibInterface new Z_DEFLATED</body>
+
+<body package="Compression-Zip-Write">setCompressionMethodStore	self compressionMethod: ZLibInterface new Z_NO_COMPRESSION.</body>
 </methods>
 
 <methods>
 <class-id>OS.Zip.WritableArchive</class-id> <category>services</category>
 
-<body package="Compression-Zip-Write">close	| totalEntries centralDirectoryPosition | 	[	" write central directory "		centralDirectoryPosition := stream position.		entries do: [: entry | entry writeCentralHeaderTo: stream ].		" update and write directory record "		totalEntries := entries size.		self directorySize: stream position - centralDirectoryPosition.		self totalEntries: totalEntries.		self totalEntriesOnDisk: totalEntries.		self directoryOffset: centralDirectoryPosition.		stream nextPutAll: directory asByteArray.		self encodeString: self comment on: stream	] ensure: [ stream close ].</body>
+<body package="Compression-Zip-Write">close	| totalEntries centralDirectoryPosition | 		[	" write central directory "		centralDirectoryPosition := stream position.		entries do: [: entry | entry writeCentralHeaderTo: stream ].		" update and write directory record "		totalEntries := entries size.		self directorySize: stream position - centralDirectoryPosition.		self totalEntries: totalEntries.		self totalEntriesOnDisk: totalEntries.		self directoryOffset: centralDirectoryPosition.		self needsZip64			ifTrue: [ self writeZip64Directory ].		stream nextPutAll: directory asByteArray.		self encodeString: self comment on: stream	] ensure: [ stream close ].</body>
 
 <body package="Compression-Zip-Write">extractTo: targetDirectory	self shouldNotImplement</body>
 </methods>
@@ -203,7 +472,7 @@ Date: 1:54:10 PM September 16, 2017
 <methods>
 <class-id>OS.Zip.WritableArchive</class-id> <category>initialize-release</category>
 
-<body package="Compression-Zip-Write">on: aStream	stream := aStream.	stream reset.	self compressionLevel: ZLib.ZLibInterface Z_BEST_SPEED.	comment := ''.	entries := OrderedCollection new.	directory := UninterpretedBytes new: 22.	EndCentralDirectorySignature keysAndValuesDo: [ : i : byte | 		directory byteAt: i put: byte	].</body>
+<body package="Compression-Zip-Write">on: aStream 	stream := aStream.	stream reset.	comment := ''.	entries := OrderedCollection new.	directory := UninterpretedBytes new: 22.	EndCentralDirectorySignature keysAndValuesDo: [: i : byte | directory byteAt: i put: byte ].	self initializeZip64.	" default compression settings "	self compressionLevel: ZLib.ZLibInterface Z_BEST_SPEED.	self compressionMethod: ZLib.ZLibInterface Z_DEFLATED.</body>
 </methods>
 
 <methods>
@@ -221,7 +490,7 @@ Date: 1:54:10 PM September 16, 2017
 
 <body package="Compression-Zip-Write">addFilename: aFilenameOrString as: filenameInArchive 	" Add the contents of the file as a file named filenameInArchive "	self addFilename: aFilenameOrString as: filenameInArchive entryBlock: nil</body>
 
-<body package="Compression-Zip-Write">addFilename: aFilenameOrString as: filenameInArchive entryBlock: entryBlock	" Add the contents of the file as a file named filenameInArchive "	| readStream filename timestamp archiveEntry |	archiveEntry := ArchiveEntry newForWriting.	filename := aFilenameOrString asFilename.	archiveEntry fileName: filenameInArchive asFilenameInZIPArchive asString.	timestamp := filename modificationTimestamp.	timestamp notNil 		ifTrue: 		[	archiveEntry lastModificationDate: timestamp asDate;				lastModificationTime: timestamp asTime		].	entryBlock notNil ifTrue: [ entryBlock value: archiveEntry ].	readStream := filename readStream binary.	[ self addFromStream: readStream entry: archiveEntry ] ensure: [ readStream close ]</body>
+<body package="Compression-Zip-Write">addFilename: aFilenameOrString as: filenameInArchive entryBlock: entryBlock 	" Add the contents of the file as a file named filenameInArchive "	| readStream filename timestamp archiveEntry buffer |	archiveEntry := ArchiveEntry newForWriting.	filename := aFilenameOrString asFilename.	archiveEntry fileName: filenameInArchive asFilenameInZIPArchive asString.	timestamp := filename modificationTimestamp.	timestamp notNil 		ifTrue: 		[	archiveEntry lastModificationDate: timestamp asDate;				lastModificationTime: timestamp asTime		].	entryBlock notNil 		ifTrue: [ entryBlock value: archiveEntry ].	readStream := filename readStream binary.	buffer := ByteArray new: ( OS.ZLib.DeflateStream.BufferSize min: filename fileSize ).	[	self 			writeStreamForEntry: archiveEntry			compressionLevel: self compressionLevel			compressionMethod: self compressionMethod			do: 			[: writeStream |								[						[ readStream atEnd ] whileFalse: 						[ | read |							read := readStream nextAvailable: buffer size into: buffer startingAt: 1.							writeStream next: read putAll: buffer startingAt: 1						]				] ensure: [ readStream close ]			]	] ensure: [ readStream close ].</body>
 
 <body package="Compression-Zip-Write">addFilename: aFilename relocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory	" Add the contents of the file. 	 Adjust the filename to be relative to fileInArchiveBaseDirectory instead of fileBaseDirectory "	| filenameInArchive |	filenameInArchive := aFilename asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory.	^ self addFilename: aFilename as: filenameInArchive</body>
 
@@ -231,13 +500,13 @@ Date: 1:54:10 PM September 16, 2017
 <methods>
 <class-id>OS.Zip.WritableArchive</class-id> <category>writing - low level</category>
 
-<body package="Compression-Zip-Write">addFromStream: aReadStream entry: archiveEntry 	" Add the contents of the read stream "	self 		writeStreamForEntry: archiveEntry		compressionLevel: self compressionLevel		do: 		[: writeStream |			[					[ aReadStream atEnd ] whileFalse: [ writeStream nextPut: aReadStream next ]			] ensure: [ aReadStream close ]		].</body>
+<body package="Compression-Zip-Write">addFromStream: aReadStream entry: archiveEntry 	" Add the contents of the read stream "	self 		writeStreamForEntry: archiveEntry		compressionLevel: self compressionLevel		compressionMethod: self compressionMethod		do: 		[: writeStream |						[					[ aReadStream atEnd ] whileFalse: [ writeStream nextPut: aReadStream next ]			] ensure: [ aReadStream close ]		].</body>
 
-<body package="Compression-Zip-Write">writeStreamForEntry: archiveEntry compressionLevel: aCompressionLevel do: aBlock 	" Passes a binary write stream to the block. the contents will be added to the ZIP archive.	The archive entry will be updated (file size etc.) "	| deflateStream |	deflateStream := ZipDeflateStream on: stream compressionLevel: aCompressionLevel archiveEntry: archiveEntry.	[ aBlock value: deflateStream ] ensure: [ deflateStream close ].	entries add: archiveEntry.</body>
+<body package="Compression-Zip-Write">writeStreamForEntry: archiveEntry compressionLevel: aCompressionLevel compressionMethod: aCompressionMethod do: aBlock 	" Passes a binary write stream to the block. the contents will be added to the ZIP archive.	The archive entry will be updated (file size etc.) "	| deflateStream streamClass |	streamClass := self streamClassForCompressionMethod: aCompressionMethod.	archiveEntry compressionMethod: aCompressionMethod.	deflateStream := streamClass 			on: stream			compressionLevel: aCompressionLevel			compressionMethod: aCompressionMethod			archiveEntry: archiveEntry.	[ aBlock value: deflateStream ] ensure: [ deflateStream close ].	entries add: archiveEntry.</body>
 
-<body package="Compression-Zip-Write">writeStreamForEntry: archiveEntry do: aBlock 	" Passes a binary write stream to the block. the contents will be added to the ZIP archive.	The archive entry will be updated (file size etc.) "	self writeStreamForEntry: archiveEntry compressionLevel: self compressionLevel do: aBlock</body>
+<body package="Compression-Zip-Write">writeStreamForEntry: archiveEntry do: aBlock 	" Passes a binary write stream to the block. the contents will be added to the ZIP archive.	The archive entry will be updated (file size etc.) "	self 		writeStreamForEntry: archiveEntry		compressionLevel: self compressionLevel		compressionMethod: self compressionMethod		do: aBlock.</body>
 
-<body package="Compression-Zip-Write">writeStreamNamed: aStringOrFilename compressionLevel: aCompressionLevel do: aBlock 	" Passes a binary write stream to the block. The contents will be added to the ZIP archive."	| entry |	entry := ArchiveEntry newForWriting.	entry fileName: aStringOrFilename asFilenameInZIPArchive asString.	self writeStreamForEntry: entry compressionLevel: aCompressionLevel do: aBlock.</body>
+<body package="Compression-Zip-Write">writeStreamNamed: aStringOrFilename compressionLevel: aCompressionLevel do: aBlock 	" Passes a binary write stream to the block. The contents will be added to the ZIP archive."	| entry |	entry := ArchiveEntry newForWriting.	entry fileName: aStringOrFilename asFilenameInZIPArchive asString.	self 		writeStreamForEntry: entry		compressionLevel: aCompressionLevel		compressionMethod: self compressionMethod		do: aBlock.</body>
 </methods>
 
 <methods>
@@ -247,39 +516,17 @@ Date: 1:54:10 PM September 16, 2017
 </methods>
 
 <methods>
+<class-id>OS.Zip.WritableArchive class</class-id> <category>private</category>
+
+<body package="Compression-Zip-Write">streamMap	| interface |	interface := ZLibInterface new.	StreamMap isNil 		ifTrue: 		[	StreamMap := Dictionary new.			StreamMap at: interface Z_NO_COMPRESSION put: ZipStoreWriteStream.			StreamMap at: interface Z_DEFLATED put: ZipDeflateStream		].	^ StreamMap</body>
+</methods>
+
+<methods>
 <class-id>OS.Zip.ZipDeflateStream</class-id> <category>private</category>
 
-<body package="Compression-Zip-Write">archiveEntry: anArchiveEntry	archiveEntry := anArchiveEntry.</body>
+<body package="Compression-Zip-Write">setupBufferAndLimits	" copy-paste to be able to set the compression method..."	| result |	interface := ZLibInterface newUsingEngineAllocator.	outputBuffer := interface class cachedHeap: BufferSize.	collection := interface class cachedHeap: BufferSize.	result := interface		cDeflateInit2: interface zstream		level: self compressionLevel		method: self compressionMethod " &lt;&lt; the only change "		windowBits: self windowBits		memLevel: interface DEF_MEM_LEVEL		strategy: interface Z_DEFAULT_STRATEGY		version: interface version		streamSize: interface z_stream dataSize.	result ~= interface Z_OK ifTrue:		[self error: 'zlib deflateInit: initialization failed'].	interface		next_out: outputBuffer fixedHeapAddress;		avail_out: BufferSize.	position := 0.	readLimit := -1.	writeLimit := BufferSize</body>
 
-<body package="Compression-Zip-Write">writeBuffer: flush		position &gt; 0 ifTrue:		[crc32 := interface cCrc32: crc32 buffer: collection length: position].	^super writeBuffer: flush</body>
-
-<body package="Compression-Zip-Write">writeHeader	headerPosition := destinationStream position.	self archiveEntry offset: headerPosition .	" the actual local file header will be written later "	self archiveEntry writeTemporaryLocalHeaderTo: destinationStream.	contentPosition := destinationStream position.</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ZipDeflateStream</class-id> <category>initialize-release</category>
-
-<body package="Compression-Zip-Write">finishOutput	| endPosition |	destinationStream flush.	endPosition := destinationStream position.	" update the header "	self archiveEntry 		crc32: crc32;		compressedSize: endPosition - contentPosition;		uncompressedSize: interface total_in.	destinationStream position: headerPosition.	self archiveEntry writeFinalLocalHeaderTo: destinationStream.	destinationStream position: endPosition.</body>
-
-<body package="Compression-Zip-Write">on: aStream	archiveEntry compressionMethod: ZLibInterface Z_DEFLATED.	super on: aStream.	crc32 := interface cCrc32: 0 buffer: 0 length: 0.</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ZipDeflateStream</class-id> <category>accessing</category>
-
-<body package="Compression-Zip-Write">archiveEntry	^ archiveEntry</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ZipDeflateStream</class-id> <category>status</category>
-
-<body package="Compression-Zip-Write">close	"Write any unwritten information. 	Does not close the archive stream"	self finishBuffer.	self finishOutput.</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ZipDeflateStream class</class-id> <category>instance creation</category>
-
-<body package="Compression-Zip-Write">on: stream compressionLevel: compressionLevel archiveEntry: archiveEntry 	^ self basicNew 		archiveEntry: archiveEntry;		on: stream compressionLevel: compressionLevel;		yourself</body>
+<body package="Compression-Zip-Write">writeBuffer: flush 	self updateCrc.	^ super writeBuffer: flush</body>
 </methods>
 
 <methods>
@@ -301,7 +548,7 @@ Date: 1:54:10 PM September 16, 2017
 
 <body package="Compression-Zip-Write">commentLength: anInteger	header unsignedShortAt: 29 put: anInteger bigEndian: false</body>
 
-<body package="Compression-Zip-Write">compressedSize: anInteger	header unsignedLongAt: 17 put: anInteger bigEndian: false.	localHeader unsignedLongAt: 15 put: anInteger bigEndian: false.</body>
+<body package="Compression-Zip-Write">compressedSize: anInteger	self headerAt: #compressedSize central: 17 local: 15 putLong: anInteger</body>
 
 <body package="Compression-Zip-Write">compressionMethod: anInteger	header unsignedShortAt: 7 put: anInteger bigEndian: false.	localHeader unsignedShortAt: 5 put: anInteger bigEndian: false.</body>
 
@@ -327,11 +574,9 @@ Date: 1:54:10 PM September 16, 2017
 
 <body package="Compression-Zip-Write">madeByVersion: anInteger	header unsignedShortAt: 1 put: anInteger bigEndian: false</body>
 
-<body package="Compression-Zip-Write">offset: anInteger	header unsignedLongAt: 39 put: anInteger bigEndian: false</body>
+<body package="Compression-Zip-Write">offset: anInteger	self headerAt: #offset central: 39 local: nil putLong: anInteger.</body>
 
-<body package="Compression-Zip-Write">uncompressedSize: anInteger	header unsignedLongAt: 21 put: anInteger bigEndian: false.	localHeader unsignedLongAt: 19 put: anInteger bigEndian: false.</body>
-
-<body package="Compression-Zip-Write">versionMadeBy: anInteger	header unsignedShortAt: 1 put: anInteger bigEndian: false.</body>
+<body package="Compression-Zip-Write">uncompressedSize: anInteger	self headerAt: #uncompressedSize central: 21 local: 19 putLong: anInteger</body>
 
 <body package="Compression-Zip-Write">versionToExtract: anInteger	header unsignedShortAt: 3 put: anInteger bigEndian: false.	localHeader unsignedShortAt: 1 put: anInteger bigEndian: false.</body>
 </methods>
@@ -345,13 +590,15 @@ Date: 1:54:10 PM September 16, 2017
 
 <body package="Compression-Zip-Write">generalBitFlags: anInteger	header unsignedShortAt: 5 put: anInteger bigEndian: false.	localHeader unsignedShortAt: 3 put: anInteger bigEndian: false.</body>
 
-<body package="Compression-Zip-Write">prepareWrite	prepared 		ifFalse: 		[	self checkUTF8: fileName.			self checkUTF8: comment.			encodedFileName := self encodeString: fileName.			encodedComment := self encodeString: comment.			self fileNameLength: encodedFileName size.			prepared := true		].</body>
+<body package="Compression-Zip-Write">headerAt: key central: headerOffset local: localHeaderOffset putLong: zipValue 	| headerValue |	headerValue := zipValue &gt;= Zip64OverflowMarkerLong 			ifTrue: 			[	" ZIP64 needed "				zip64FieldValues at: key put: zipValue.				Zip64OverflowMarkerLong			]			ifFalse: [ zipValue ].	header unsignedLongAt: headerOffset put: headerValue bigEndian: false.	localHeaderOffset notNil 		ifTrue: [ localHeader unsignedLongAt: localHeaderOffset put: headerValue bigEndian: false ].	prepared := false.</body>
+
+<body package="Compression-Zip-Write">prepareWrite	prepared 		ifFalse: 		[	self checkUTF8: fileName.			self checkUTF8: comment.			encodedFileName := self encodeString: fileName.			encodedComment := self encodeString: comment.			self fileNameLength: encodedFileName size.			self prepareZip64.			prepared := true		].</body>
+
+<body package="Compression-Zip-Write">prepareZip64	" create an extra field with zip64 data.		the PKZIP  standard unfortunately forces us to write the extra field to the 	local file header, too. But at this time we don't know if it is needed.	And it is variable sized, so it is not possible to pre-allocate it.		Define another custom field to pad the size of the extra field 	to a fixed size as an extra cheesy workaround "	| extraFieldData zip64Fields fieldOffset customOffset zip64HeaderSize zip64DataSize customDataSize |	zip64Fields := self zip64Fields.	extraFieldData := UninterpretedBytes new: 8 + ( zip64Fields size * 8 ).	zip64HeaderSize := 0.	zip64DataSize := 0.	zip64FieldValues notEmpty 		ifTrue: 		[	zip64HeaderSize := 4.			zip64DataSize := zip64FieldValues size * 8.			self class zip64ExtraFieldId keysAndValuesDo: [: pos : b | extraFieldData byteAt: pos put: b ].			extraFieldData unsignedShortAt: 3 put: zip64DataSize.			fieldOffset := 0.			zip64Fields do: 				[: fieldPragma |					zip64FieldValues 						at: fieldPragma selector						ifPresent: 						[: value |							extraFieldData unsignedLongLongAt: fieldOffset + 5 put: value bigEndian: false.							fieldOffset := fieldOffset + 8						]				]		].	" custom padding field "	customOffset := zip64HeaderSize + zip64DataSize.	customDataSize := zip64Fields size * 8  + 4 - zip64DataSize - zip64HeaderSize.	self class zip64PaddingFieldId 		keysAndValuesDo: [: pos : b | extraFieldData byteAt: customOffset + pos put: b ].	extraFieldData unsignedShortAt: customOffset + 3 put: customDataSize.	self extraField: extraFieldData asByteArray.</body>
 
 <body package="Compression-Zip-Write">writeCentralHeaderTo: aStream	self prepareWrite.	aStream nextPutAll: CentralFileHeaderSignature.	aStream nextPutAll: header asByteArray.	aStream nextPutAll: encodedFileName.	aStream nextPutAll: self extraField.	aStream nextPutAll: encodedComment.</body>
 
-<body package="Compression-Zip-Write">writeFinalLocalHeaderTo: aStream	self prepareWrite.	aStream nextPutAll: LocalFileHeaderSignature.	aStream nextPutAll: localHeader asByteArray.	" the header contains various field lengths, so modifying the archive entry afterwards would cause corruption "	self beImmutable.</body>
-
-<body package="Compression-Zip-Write">writeTemporaryLocalHeaderTo: aStream	" the actual local file header will be written later "	self prepareWrite.	aStream nextPutAll: LocalFileHeaderSignature.	aStream nextPutAll: localHeader asByteArray.	aStream nextPutAll: encodedFileName.</body>
+<body package="Compression-Zip-Write">writeLocalHeaderTo: aStream	self prepareWrite.	aStream nextPutAll: LocalFileHeaderSignature.	aStream nextPutAll: localHeader asByteArray.	aStream nextPutAll: encodedFileName.	aStream nextPutAll: self extraField.</body>
 </methods>
 
 <methods>
@@ -363,7 +610,7 @@ Date: 1:54:10 PM September 16, 2017
 <methods>
 <class-id>OS.Zip.WritableArchiveEntry</class-id> <category>initialize-release</category>
 
-<body package="Compression-Zip-Write">initialize	| zipVersion |	header := UninterpretedBytes new: 42.	localHeader := UninterpretedBytes new: 26.	fileName := ''.	extraField := #[].	comment := ''.	zipVersion := Archive zipVersion.	self versionToExtract: zipVersion.	self madeByVersion: zipVersion.	self lastModificationTime: Time now.	self lastModificationDate: Date today.	prepared := false.</body>
+<body package="Compression-Zip-Write">initialize	| zipVersion |	header := UninterpretedBytes new: 42.	localHeader := UninterpretedBytes new: 26.	fileName := ''.	extraField := #[].	comment := ''.	zipVersion := Archive zipVersion.	self versionToExtract: zipVersion.	self madeByVersion: zipVersion.	self lastModificationTime: Time now.	self lastModificationDate: Date today.	zip64FieldValues := Dictionary new.	prepared := false.</body>
 </methods>
 
 <methods>
@@ -373,9 +620,33 @@ Date: 1:54:10 PM September 16, 2017
 </methods>
 
 <methods>
-<class-id>OS.UnixFilename</class-id> <category>converting</category>
+<class-id>OS.Zip.WritableArchiveEntry class</class-id> <category>accessing</category>
 
-<body package="Compression-Zip-Write">asFilenameInZIPArchive	^ self</body>
+<body package="Compression-Zip-Write">zip64PaddingFieldId	^ #[ 16r07 16rff]</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.Archive class</class-id> <category>DOS utility</category>
+
+<body package="Compression-Zip-Write">timeForDOS: aTime	" self timeFromDOS: (self timeForDOS:  Time now) "	^ (aTime seconds // 2		bitOr: (aTime minutes bitShift: 5))		bitOr: (aTime hours bitShift: 11)</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.ArchiveEntry</class-id> <category>initialize-release</category>
+
+<body package="Compression-Zip-Write">on: aStream 	"Assume that aStream is pre-positioned, ready to load up a file header from the directory."	| fileNameBytes |	stream := aStream.	( aStream next: 4 ) ~= CentralFileHeaderSignature 		ifTrue: [ ^ self error: 'Central file header signature not found.' ].	header := ( stream next: 42 ) changeClassTo: UninterpretedBytes.	self diskNumber ~= 0 		ifTrue: [ self error: 'Multi-part archives not currently supported.' ].	fileNameBytes := aStream next: self fileNameLength.	" &gt;&gt; Patch: UTF-8 support "	fileName := self isUTF8 			ifTrue: [ fileNameBytes asStringEncoding: #utf8 ]			ifFalse: [ fileNameBytes asStringEncoding: #cp857 ].	" &lt;&lt;&lt; "	" &gt;&gt;&gt; Patch: extra Field should be a byte array, not a a string "	extraField := ( aStream next: self extraFieldLength ).	" &lt;&lt;&lt; "	comment := ( aStream next: self commentLength ) asString.</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.ArchiveEntry</class-id> <category>services</category>
+
+<body package="Compression-Zip-Write">checkDirectoryTraversal: name 	#(		'*\*'		'..*' 		'*:*'	) do: 		[: traversalPattern | 			( traversalPattern match: name ) 				ifTrue: [ DirectoryTraversalError raiseSignal: 'Directory traversal detected in archive file ' , self fileName printString ]		].</body>
+</methods>
+
+<methods>
+<class-id>Core.CharacterArray</class-id> <category>converting</category>
+
+<body package="Compression-Zip-Write">asFilenameInZIPArchive	" Return a filename for a file within a ZIP archive.	Assume that this string is a platform-dependent filename "	^ self asFilename asFilenameInZIPArchive</body>
 </methods>
 
 <methods>
@@ -387,63 +658,9 @@ Date: 1:54:10 PM September 16, 2017
 </methods>
 
 <methods>
-<class-id>OS.Zip.ArchiveEntry class</class-id> <category>instance creation</category>
-
-<body package="Compression-Zip-Write">newForWriting	^ WritableArchiveEntry new</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>accessing</category>
-
-<body package="Compression-Zip-Write">asFilenameInZIPArchive	^ UnixFilename named: self fileName</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>services</category>
-
-<body package="Compression-Zip-Write">checkDirectoryTraversal: name 	#(		'*\*'		'..*' 		'*:*'	) do: 		[: traversalPattern | 			( traversalPattern match: name ) 				ifTrue: [ DirectoryTraversalError raiseSignal: 'Directory traversal detected in archive file ' , self fileName printString ]		].</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>accessing</category>
-
-<body package="Compression-Zip-Write">comment	^ comment</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>services</category>
-
-<body package="Compression-Zip-Write">extractTo: directory 	"Extract this file into the provided directory. The directory must already exist. Note that this method will not automatically close the archive (assuming other entries might be extracted too).	directory	&lt;Filename|String&gt; an existing directory to extract into"	| path last file buffer source |	path := self fileName tokensBasedOn: $/.	self isDirectory 		ifFalse: 		[	last := path last.			path := path copyFrom: 1 to: path size - 1		].	file := path 			inject: directory asFilename			into: 			[: parent : name | 				| filename |				" &gt;&gt;&gt; Patch: check directory traversal "				self checkDirectoryTraversal: name.				" &lt;&lt;&lt; "				filename := parent construct: name.				filename exists 					ifFalse: [ filename makeDirectory ].				filename			].	self isDirectory 		ifTrue: [ ^ self	"we're done" ].	file := file construct: last.	" &gt;&gt; Patch: always overwrite "	"file exists 		ifTrue: 		[	last := ( FileAlreadyExists raiseRequestWith: last ) ifNil: [ ^ self ].			file := file directory construct: last		]."	" &lt;&lt;&lt; "	file := file writeStream binary;			yourself.	[	buffer := ByteArray new: 4096.		source := self readStream.		[ source atEnd ] whileFalse: [ file next: ( source nextAvailable: buffer size into: buffer startingAt: 1 ) putAll: buffer startingAt: 1 ]	] ensure: [ file close ].</body>
-</methods>
-
-<methods>
 <class-id>OS.Zip.ArchiveEntry</class-id> <category>private</category>
 
 <body package="Compression-Zip-Write">generalBitFlags: aShort	header unsignedShortAt: 5 put: aShort bigEndian: false</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>testing</category>
-
-<body package="Compression-Zip-Write">isUTF8	^  self generalBitFlags allMask: Archive bitMaskUTF8</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>initialize-release</category>
-
-<body package="Compression-Zip-Write">on: aStream 	"Assume that aStream is pre-positioned, ready to load up a file header from the directory."	| fileNameBytes |	stream := aStream.	( aStream next: 4 ) ~= CentralFileHeaderSignature 		ifTrue: [ ^ self error: 'Central file header signature not found.' ].	header := ( stream next: 42 ) changeClassTo: UninterpretedBytes.	self diskNumber ~= 0 		ifTrue: [ self error: 'Multi-part archives not currently supported.' ].	fileNameBytes := aStream next: self fileNameLength.	" &gt;&gt; Patch: UTF-8 support "	fileName := self isUTF8 			ifTrue: [ fileNameBytes asStringEncoding: #utf8 ]			ifFalse: [ fileNameBytes asStringEncoding: #cp857 ].	" &lt;&lt;&lt; "	extraField := ( aStream next: self extraFieldLength ) asString.	comment := ( aStream next: self commentLength ) asString.</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.ArchiveEntry</class-id> <category>accessing</category>
-
-<body package="Compression-Zip-Write">versionMadeBy	^header unsignedShortAt: 1 bigEndian: false</body>
-</methods>
-
-<methods>
-<class-id>OS.Zip.Archive class</class-id> <category>constants</category>
-
-<body package="Compression-Zip-Write">bitMaskUTF8	^  16r800</body>
 </methods>
 
 <methods>
@@ -453,43 +670,53 @@ Date: 1:54:10 PM September 16, 2017
 </methods>
 
 <methods>
+<class-id>OS.Zip.ArchiveEntry</class-id> <category>testing</category>
+
+<body package="Compression-Zip-Write">isUTF8	^  self generalBitFlags allMask: Archive bitMaskUTF8</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.ArchiveEntry</class-id> <category>services</category>
+
+<body package="Compression-Zip-Write">extractTo: directory 	"Extract this file into the provided directory. The directory must already exist. Note that this method will not automatically close the archive (assuming other entries might be extracted too).	directory	&lt;Filename|String&gt; an existing directory to extract into"	| path last file buffer source |	path := self fileName tokensBasedOn: $/.	self isDirectory 		ifFalse: 		[	last := path last.			path := path copyFrom: 1 to: path size - 1		].	file := path 			inject: directory asFilename			into: 			[: parent : name | 				| filename |				" &gt;&gt;&gt; Patch: check directory traversal "				self checkDirectoryTraversal: name.				" &lt;&lt;&lt; "				filename := parent construct: name.				filename exists 					ifFalse: [ filename makeDirectory ].				filename			].	self isDirectory 		ifTrue: [ ^ self	"we're done" ].	file := file construct: last.	" &gt;&gt; Patch: always overwrite "	"file exists 		ifTrue: 		[	last := ( FileAlreadyExists raiseRequestWith: last ) ifNil: [ ^ self ].			file := file directory construct: last		]."	" &lt;&lt;&lt; "	file := file writeStream binary;			yourself.	[	buffer := ByteArray new: 4096.		source := self readStream.		[ source atEnd ] whileFalse: [ file next: ( source nextAvailable: buffer size into: buffer startingAt: 1 ) putAll: buffer startingAt: 1 ]	] ensure: [ 		" &gt;&gt;&gt; Patch: close stream to prevent memory zlib leak "		source notNil ifTrue: [ source close ].		" &lt;&lt;&lt; "		file close 	].</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.ArchiveEntry</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">asFilenameInZIPArchive	^ UnixFilename named: self fileName</body>
+</methods>
+
+<methods>
+<class-id>OS.UnixFilename</class-id> <category>converting</category>
+
+<body package="Compression-Zip-Write">asFilenameInZIPArchive	^ self</body>
+</methods>
+
+<methods>
 <class-id>OS.Zip.Archive class</class-id> <category>instance creation</category>
 
 <body package="Compression-Zip-Write">newOnFilename: aFilename	^ WritableArchive filename: aFilename</body>
 </methods>
 
 <methods>
-<class-id>OS.Zip.Archive class</class-id> <category>DOS utility</category>
-
-<body package="Compression-Zip-Write">timeForDOS: aTime	" self timeFromDOS: (self timeForDOS:  Time now) "	^ (aTime seconds // 2		bitOr: (aTime minutes bitShift: 5))		bitOr: (aTime hours bitShift: 11)</body>
-</methods>
-
-<methods>
 <class-id>OS.Zip.Archive class</class-id> <category>convenience</category>
 
 <body package="Compression-Zip-Write">unzip: aZipFilename to: aDirectory	" extract all files within the archive to the directory "	| archive |	archive := self filename: aZipFilename.	[		archive extractTo: aDirectory.	] ensure: [ archive close ]</body>
-
-<body package="Compression-Zip-Write">zipDirectory: aDirectory to: zipFilename 	" add all files within the directory to a new archive "	| archive |	archive := self newOnFilename: zipFilename.	[ archive addDirectory: aDirectory ] ensure: [ archive close ]</body>
 </methods>
 
 <methods>
 <class-id>OS.Zip.Archive class</class-id> <category>constants</category>
 
-<body package="Compression-Zip-Write">zipVersion	" 2.0 is required for deflate compression method "	^ 20 bitOr: (OSSystemSupport concreteClass zipOSVersion bitShift: 8)</body>
+<body package="Compression-Zip-Write">zipVersion	" 4.5 is required for Zip64 compression method "	^ 45</body>
+
+<body package="Compression-Zip-Write">bitMaskUTF8	^  16r800</body>
 </methods>
 
 <methods>
-<class-id>OS.OSSystemSupport class</class-id> <category>accessing</category>
+<class-id>OS.Zip.ArchiveEntry class</class-id> <category>instance creation</category>
 
-<body package="Compression-Zip-Write">zipOSVersion	" see http://www.iana.org/assignments/media-types/application/zip "	^ 0</body>
-</methods>
-
-<methods>
-<class-id>Core.CharacterArray</class-id> <category>converting</category>
-
-<body package="Compression-Zip-Write">asFilenameInZIPArchive	" Return a filename for a file within a ZIP archive.	Assume that this string is a platform-dependent filename "	^ self asFilename asFilenameInZIPArchive</body>
-
-<body package="Compression-Zip-Write">asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory 	^ self asFilename asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory</body>
+<body package="Compression-Zip-Write">newForWriting	^ WritableArchiveEntry new</body>
 </methods>
 
 <methods>
@@ -498,54 +725,35 @@ Date: 1:54:10 PM September 16, 2017
 <body package="Compression-Zip-Write">asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory 	^ self asFilename asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory</body>
 </methods>
 
+<methods>
+<class-id>OS.Zip.Archive class</class-id> <category>convenience</category>
+
+<body package="Compression-Zip-Write">zipDirectory: aDirectory to: zipFilename 	" add all files within the directory to a new archive "	| archive |	archive := self newOnFilename: zipFilename.	[ archive addDirectory: aDirectory ] ensure: [ archive close ]</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.DeflatedStream</class-id> <category>private</category>
+
+<body package="Compression-Zip-Write">nextBuffer	| notAtEnd |	notAtEnd := super nextBuffer.	checkCrc ifTrue: [		readLimit &gt; 0 ifTrue: [crc := interface cCrc32: crc buffer: collection length: readLimit].		notAtEnd ifFalse: [			crc ~= self crc32 ifTrue: [self error: 'file crc error'].			" &gt;&gt; Patch: strm.total_in and strm_total_out counters may be limited to 4 GB, see https://www.zlib.net/zlib_faq.html "			self uncompressedSize &lt; 16rffffffff				ifTrue: [ interface total_out  ~= self uncompressedSize ifTrue: [self error: 'file length error'] ]			" &lt;&lt;&lt; "		 ] ].	^notAtEnd</body>
+</methods>
+
+<methods>
+<class-id>Core.CharacterArray</class-id> <category>converting</category>
+
+<body package="Compression-Zip-Write">asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory 	^ self asFilename asFilenameInZIPArchiveRelocateFrom: fileBaseDirectory to: fileInArchiveBaseDirectory</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.ArchiveEntry</class-id> <category>accessing</category>
+
+<body package="Compression-Zip-Write">versionMadeBy	^header unsignedShortAt: 1 bigEndian: false</body>
+
+<body package="Compression-Zip-Write">comment	^ comment</body>
+</methods>
+
 <do-it>"Imported Classes:"</do-it>
 
 <do-it>self error: 'Attempting to file-in parcel imports.  Choose terminate or close'</do-it>
-
-<class>
-<name>DeflateStream</name>
-<environment>OS.ZLib</environment>
-<super>Core.WriteStream</super>
-<private>false</private>
-<indexed-type>none</indexed-type>
-<inst-vars>outputBuffer interface destinationStream compressionLevel </inst-vars>
-<class-inst-vars></class-inst-vars>
-<imports></imports>
-<category>Compression-ZLib</category>
-<attributes>
-<package>Compression-ZLib</package>
-</attributes>
-</class>
-
-<class>
-<name>CharacterArray</name>
-<environment>Core</environment>
-<super>Core.ArrayedCollection</super>
-<private>false</private>
-<indexed-type>none</indexed-type>
-<inst-vars></inst-vars>
-<class-inst-vars></class-inst-vars>
-<imports></imports>
-<category>Collections-Text</category>
-<attributes>
-<package>Collections-Text</package>
-</attributes>
-</class>
-
-<class>
-<name>Error</name>
-<environment>Core</environment>
-<super>Core.Exception</super>
-<private>false</private>
-<indexed-type>none</indexed-type>
-<inst-vars></inst-vars>
-<class-inst-vars></class-inst-vars>
-<imports></imports>
-<category>Kernel-Exception Handling</category>
-<attributes>
-<package>Kernel-Exception Handling</package>
-</attributes>
-</class>
 
 <class>
 <name>Archive</name>
@@ -578,17 +786,32 @@ Date: 1:54:10 PM September 16, 2017
 </class>
 
 <class>
-<name>LogicalFilename</name>
-<environment>OS</environment>
-<super>Core.Object</super>
+<name>DeflatedStream</name>
+<environment>OS.Zip</environment>
+<super>OS.ZLib.InflateStream</super>
 <private>false</private>
 <indexed-type>none</indexed-type>
-<inst-vars>components </inst-vars>
+<inst-vars>checkCrc crc header fileName extraField </inst-vars>
 <class-inst-vars></class-inst-vars>
 <imports></imports>
-<category>OS-Support</category>
+<category>Zlib Interface</category>
 <attributes>
-<package>OS-Support</package>
+<package>Compression-Zip</package>
+</attributes>
+</class>
+
+<class>
+<name>CharacterArray</name>
+<environment>Core</environment>
+<super>Core.ArrayedCollection</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars></inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category>Collections-Text</category>
+<attributes>
+<package>Collections-Text</package>
 </attributes>
 </class>
 
@@ -619,6 +842,51 @@ Date: 1:54:10 PM September 16, 2017
 <category>OS-Unix</category>
 <attributes>
 <package>OS-Unix</package>
+</attributes>
+</class>
+
+<class>
+<name>DeflateStream</name>
+<environment>OS.ZLib</environment>
+<super>Core.WriteStream</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars>outputBuffer interface destinationStream compressionLevel </inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category>Compression-ZLib</category>
+<attributes>
+<package>Compression-ZLib</package>
+</attributes>
+</class>
+
+<class>
+<name>Error</name>
+<environment>Core</environment>
+<super>Core.Exception</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars></inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category>Kernel-Exception Handling</category>
+<attributes>
+<package>Kernel-Exception Handling</package>
+</attributes>
+</class>
+
+<class>
+<name>LogicalFilename</name>
+<environment>OS</environment>
+<super>Core.Object</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars>components </inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category>OS-Support</category>
+<attributes>
+<package>OS-Support</package>
 </attributes>
 </class>
 
