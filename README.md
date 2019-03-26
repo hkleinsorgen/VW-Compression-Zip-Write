@@ -15,4 +15,4 @@ archive comment: 'Library documentation'.
     archive close
 ].
 ```
-Protocol 'writing' of WritableArchive.contains various methods to add content to an archive.
+Protocol `writing` of WritableArchive contains various methods to add content to an archive.
