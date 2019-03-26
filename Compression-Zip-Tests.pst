@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+
+<st-source>
+<!-- 
+Name: Compression-Zip-Tests
+DevelopmentPrerequisites: #(#(#any 'Compression-Zip' '') #(#any 'Compression-Zip-Write' '') #(#any 'SUnit' ''))
+KSignature: #('definedClasses' 1 'definedClassesHash' 604638257 'extendedClasses' 0 'extendedClassesHash' 0)
+KSignatureV2: #('definedClasses' 1 'definedClassesHash' 1159546972546530982097863288977432397788815090591 'extendedClasses' 0 'extendedClassesHash' 1245845410931227995499360226027473197403882391305)
+PackageName: Compression-Zip-Tests
+Parcel: #($s "16r0073")
+PrerequisiteDescriptions: #(#(#name 'Compression-Zip' #componentType #package) #(#name 'Compression-Zip-Write' #componentType #package) #(#name 'SUnit' #componentType #package))
+PrerequisiteParcels: #(#('Compression-Zip' '') #('Compression-Zip-Write' '') #('SUnit' ''))
+Version: (7.10).1
+Date: 3:30:47 PM March 26, 2019
+ -->
+<time-stamp>From VisualWorks®, 8.3.1 of 23. März 2018 on 26. März 2019 at 15:30:47</time-stamp>
+
+
+<do-it>(Dialog confirm: 'You are filing-in a Parcel source file!\\While this is possible it will not have\the same effect as loading the parcel.\None of the Parcel''s prerequisites will\be loaded and none of its load actions\will be performed.\\Are you sure you want to file-in?' withCRs) ifFalse: [self error: 'Parcel file-in abandoned.  Choose terminate or close.']</do-it>
+
+<class>
+<name>ZipTest</name>
+<environment>OS.Zip</environment>
+<super>XProgramming.SUnit.TestCase</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars></inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category></category>
+<attributes>
+<package>Compression-Zip-Tests</package>
+</attributes>
+</class>
+
+<methods>
+<class-id>OS.Zip.ZipTest</class-id> <category>private</category>
+
+<body package="Compression-Zip-Tests">assertContentsOfEntry: entry equals: bytes	| extractStream |	extractStream := ByteArray new writeStream.	entry extractOn: extractStream.	self assert: bytes equals: extractStream contents</body>
+
+<body package="Compression-Zip-Tests">compressableBytesOfSize: size	| bytes |	bytes := ByteArray new: size.	1 to: bytes size do: [ : b | bytes at: b put: b \\ 256 ].	^ bytes</body>
+</methods>
+
+<methods>
+<class-id>OS.Zip.ZipTest</class-id> <category>testing</category>
+
+<body package="Compression-Zip-Tests">testAddBytes	| archive zipStream bytes filename zipBytes readArchive entry |	zipStream := ByteArray new writeStream.	bytes := self compressableBytesOfSize: 1000.	archive := WritableArchive on: zipStream.	[ archive addBytes: bytes name: ( filename := 'bytes.dat' )] ensure: [ archive close ].	zipBytes := zipStream contents.	readArchive := Archive on: zipBytes readStream.	[	self assert: 1 equals: readArchive entries size.		entry := readArchive entries first.		self assert: filename equals: entry fileName.		self assert: bytes size equals: entry uncompressedSize.		self assertContentsOfEntry: entry equals: bytes.		self assert: entry compressedSize &lt; zipBytes size	] ensure: [ readArchive close ].</body>
+
+<body package="Compression-Zip-Tests">testStore	| archive zipStream bytes filename zipBytes readArchive entry |	zipStream := ByteArray new writeStream.	bytes := self compressableBytesOfSize: 1000.	archive := WritableArchive on: zipStream.	archive setCompressionMethodStore.	[ archive addBytes: bytes name: ( filename := 'bytes.dat' )] ensure: [ archive close ].	zipBytes := zipStream contents.	readArchive := Archive on: zipBytes readStream.	[	self assert: 1 equals: readArchive entries size.		entry := readArchive entries first.		self assert: filename equals: entry fileName.		self assert: bytes size equals: entry compressedSize.		self assert: bytes size equals: entry uncompressedSize.		self assertContentsOfEntry: entry equals: bytes	] ensure: [ readArchive close ].</body>
+
+<body package="Compression-Zip-Tests">testUtf8	| archive zipStream bytes filename zipBytes readArchive entry |	zipStream := ByteArray new writeStream.	bytes := self compressableBytesOfSize: 50.	archive := WritableArchive on: zipStream.	[ archive addBytes: bytes name: ( filename := '千と千尋の神隠し.jpg' )] ensure: [ archive close ].	zipBytes := zipStream contents.	readArchive := Archive on: zipBytes readStream.	[	self assert: 1 equals: readArchive entries size.		entry := readArchive entries first.		self assert: filename equals: entry fileName .		self assertContentsOfEntry: entry equals: bytes.	] ensure: [ readArchive close ].</body>
+</methods>
+
+<do-it>"Imported Classes:"</do-it>
+
+<do-it>self error: 'Attempting to file-in parcel imports.  Choose terminate or close'</do-it>
+
+<class>
+<name>TestCase</name>
+<environment>XProgramming.SUnit</environment>
+<super>XProgramming.SUnit.TestAsserter</super>
+<private>false</private>
+<indexed-type>none</indexed-type>
+<inst-vars>assertCounter testSelector </inst-vars>
+<class-inst-vars></class-inst-vars>
+<imports></imports>
+<category>SUnit</category>
+<attributes>
+<package>SUnit</package>
+</attributes>
+</class>
+
+</st-source>
