@@ -2,6 +2,10 @@
 Basic support for writing ZIP archives. Corresponds to version 2.0 of the ZIP specification.
 Reading and updating is not supported. Use Compression-Zip to read archives.
 
+Also supports
+- UTF-8 filenames
+- ZIP64 (for files larger than 2 GB)
+
 ## Example
 Create a ZIP archive and add `$(VISUALWORKS)/doc/BasicLibraries.pdf` as `pdf/BasicLibraries.pdf`
 ```
